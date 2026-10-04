@@ -9,18 +9,19 @@
       <div class="project">
         <div class="project-head">
           <span class="badge">Proiect {{ i + 1 }}</span>
-          {% if i == 0 %}<span class="badge nb">Norma de Bază (NB)</span>{% endif %}
         </div>
         <label>CIM
           <input name="contract_{{ i }}" value="{{ contracts[i].contract }}" placeholder="CIM - DD/MM/YYYY">
         </label>
-        <label>Proiect
+        <label class="project-name">Proiect
           <input name="project_{{ i }}" value="{{ contracts[i].project }}" placeholder="Acronim proiect">
         </label>
         {% if i > 0 %}
         <label>Max. ore
           <input type="number" name="max_hours_{{ i }}" min="0" step="0.5" value="{{ contracts[i].max_hours }}" placeholder="40">
         </label>
+        {% else %}
+        <span class="badge nb">Norma de Bază (NB)</span>
         {% endif %}
       </div>
       {% endfor %}

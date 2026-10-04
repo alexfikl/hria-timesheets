@@ -183,9 +183,10 @@ table.grid input:disabled {
   color: var(--muted);
 }
 
+.project label.project-name { flex: 1 1 12rem; }
 .project input { padding: .35rem .5rem; }
 .project input[name^="contract_"] { width: 11rem; }
-.project input[name^="project_"] { width: 9.5rem; }
+.project input[name^="project_"] { flex: 1 1 auto; width: auto; min-width: 5rem; }
 .project input[name^="max_hours_"] { width: 5rem; }
 
 .badge {
