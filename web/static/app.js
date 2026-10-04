@@ -12,6 +12,14 @@
   ];
   const EURO_TO_RON = 4.9765;
 
+  const STORE_KEY = "hrtimesheets.form";
+  const PERSIST_FIELD =
+    /^(?:family_name|given_name|cnp|function|euro_rate|ron_rate|count|(?:contract|project|max_hours)_\d+)$/;
+  const SAVED_INPUTS =
+    'input[name^="contract_"], input[name^="project_"], input[name^="max_hours_"], ' +
+    'input[name="family_name"], input[name="given_name"], input[name="cnp"], ' +
+    'input[name="function"], input[name="euro_rate"], input[name="ron_rate"]';
+
   const RANGE_PATTERN = "(\\d{1,2}):(\\d{2})\\s*-\\s*(\\d{1,2}):(\\d{2})";
 
   function parseNumber(text) {
@@ -85,6 +93,84 @@
   function setGenerateEnabled(enabled) {
     const button = document.querySelector("button.primary");
     if (button) button.disabled = !enabled;
+  }
+
+  function loadStore() {
+    try {
+      return JSON.parse(window.localStorage.getItem(STORE_KEY)) || {};
+    } catch (err) {
+      return {};
+    }
+  }
+
+  function saveStore(store) {
+    try {
+      window.localStorage.setItem(STORE_KEY, JSON.stringify(store));
+    } catch (err) {
+      // storage may be unavailable (e.g. private mode); ignore
+    }
+  }
+
+  function persistField(input) {
+    if (!input || !PERSIST_FIELD.test(input.name || "")) return;
+    const store = loadStore();
+    store[input.name] = input.value;
+    saveStore(store);
+  }
+
+  function restoreFields() {
+    const store = loadStore();
+    document.querySelectorAll(SAVED_INPUTS).forEach(function (input) {
+      if (Object.prototype.hasOwnProperty.call(store, input.name)) {
+        input.value = store[input.name];
+      }
+    });
+  }
+
+  function rerenderWorkspace() {
+    const form = document.getElementById("form");
+    if (window.fetch && form) {
+      const params = new URLSearchParams();
+      new FormData(form).forEach(function (value, key) {
+        params.append(key, value);
+      });
+      window
+        .fetch("/partial", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: params.toString(),
+        })
+        .then(function (response) {
+          return response.ok ? response.text() : "";
+        })
+        .then(function (html) {
+          const target = document.getElementById("workspace");
+          if (!target || !html) return;
+          target.outerHTML = html;
+          refreshAll();
+        })
+        .catch(function () {
+          // keep the page usable even if the refresh fails
+        });
+      return;
+    }
+    const count = document.querySelector('input[name="count"]');
+    if (count) count.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  function restoreCount() {
+    const store = loadStore();
+    const count = document.querySelector('input[name="count"]');
+    if (!count || store["count"] === undefined) return;
+    const desired = Number.parseInt(store["count"], 10);
+    if (!Number.isFinite(desired) || desired < 1) return;
+    if (count.value !== String(desired)) count.value = String(desired);
+    // On reload the browser may have restored the count input value while the
+    // server-rendered grid still has fewer project columns, so compare the
+    // number of rendered panels rather than trusting the input's value.
+    if (desired !== document.querySelectorAll("#workspace .project").length) {
+      rerenderWorkspace();
+    }
   }
 
   function syncProjectHeaders() {
@@ -210,6 +296,7 @@
     if (!euro || !ron) return;
     const value = parseNumber(euro.value);
     ron.value = value === null ? "" : String(Math.round(value * EURO_TO_RON));
+    persistField(ron);
   }
 
   function applyFunctionRate() {
@@ -223,6 +310,7 @@
         break;
       }
     }
+    persistField(euro);
     syncRon();
   }
 
@@ -232,6 +320,7 @@
       validateAll();
       return;
     }
+    persistField(input);
     if (input.name === "function") {
       applyFunctionRate();
       return;
@@ -240,12 +329,14 @@
       syncRon();
       return;
     }
-    if (input.name && input.name.indexOf("project_") === 0) {
+    if ((input.name || "").indexOf("project_") === 0) {
       syncProjectHeaders();
     }
   });
 
   function refreshAll() {
+    restoreFields();
+    restoreCount();
     validateAll();
     syncProjectHeaders();
   }

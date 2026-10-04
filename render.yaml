@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: hria-timesheets
+    name: hria-time-sheets
     runtime: python
     plan: free
     buildCommand: uv sync --frozen --no-dev

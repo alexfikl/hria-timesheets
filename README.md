@@ -23,6 +23,7 @@ can be produced quickly and consistently.
 ## What it does
 
 - Fill in personal details and up to 12 contracts; the first is the main job (**NB**).
+- Remembers the personal and contract details in your browser between visits.
 - Enter daily time intervals — hours are computed and validated automatically
   (max 12 h/day, no overlaps, per-project max hours).
 - Weekends are disabled; weekends and Romanian public holidays are highlighted.
