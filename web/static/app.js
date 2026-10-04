@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Alexandru Fikl <alexfikl@gmail.com>
+// SPDX-License-Identifier: MIT
+
 // Client-side helpers: hours from intervals, per-day limits/overlaps, rates.
 // The server recomputes and re-validates everything authoritatively; these
 // mirror the same rules for instant feedback and to disable the generate button.

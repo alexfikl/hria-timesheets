@@ -48,10 +48,11 @@ time intervals.
 
 ## Local run
 
+Install [uv](https://docs.astral.sh/uv/), then:
+
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app:app --reload
+uv sync
+uv run uvicorn app:app --reload
 ```
 
 Open <http://127.0.0.1:8000>.
@@ -59,9 +60,10 @@ Open <http://127.0.0.1:8000>.
 ## Deploy on Render
 
 1. Push this folder to a Git repository.
-2. Create a **Web Service**; Render reads `render.yaml`:
-   - Build: `pip install -r requirements.txt`
-   - Start: `uvicorn app:app --host 0.0.0.0 --port $PORT`
+2. Create a **Web Service**; Render reads `render.yaml` and uses uv automatically
+   (a `uv.lock` is committed):
+   - Build: `uv sync --frozen --no-dev`
+   - Start: `uv run --no-dev uvicorn app:app --host 0.0.0.0 --port $PORT`
 
 ## Project layout
 
@@ -92,7 +94,7 @@ works without it; the grid simply refreshes when the form is submitted.
 - HTMX is served from our own `/static`, not a third-party CDN.
 - Every response sets `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
   `Referrer-Policy: no-referrer` and a restrictive `Content-Security-Policy`.
-- Dependencies are pinned in `requirements.txt`.
+- Dependencies are locked in `uv.lock` and installed with uv.
 - The app stores nothing and form bodies are not logged.
 
 ## Notes / limitations

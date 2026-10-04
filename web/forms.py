@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Alexandru Fikl <alexfikl@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Turn submitted form data into a :class:`Timesheet` and template context.
 
 Pure functions with no FastAPI dependency, so they can be unit tested directly.
@@ -5,8 +8,9 @@ Pure functions with no FastAPI dependency, so they can be unit tested directly.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import date
-from typing import Any, Mapping
+from typing import Any
 
 from timesheet import intervals
 from timesheet.holidays import ro_holidays, weekday_name, weekday_short
@@ -160,8 +164,7 @@ def build_context(
         "contracts": contracts,
         "days": _build_days(year, month, count, timesheet.cells),
         "total": sum(
-            daily_total(timesheet, day)
-            for day in range(1, timesheet.days_in_month + 1)
+            daily_total(timesheet, day) for day in range(1, timesheet.days_in_month + 1)
         ),
         "errors": [],
         "warnings": [],

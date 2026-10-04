@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Alexandru Fikl <alexfikl@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Parsing and normalising of the free-text time intervals used by Anexa 1.
 
 The form stores intervals as text such as ``"8:00-12:00; 16:00-20:00"``. Ranges

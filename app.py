@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Alexandru Fikl <alexfikl@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """FastAPI app that generates a Romanian "Anexa 1" timesheet.
 
 Run locally with:
@@ -83,8 +86,7 @@ async def generate(request: Request):
 
     data = render(timesheet, gray=context["gray"])
     safe_name = (
-        re.sub(r"[^A-Za-z0-9]+", "_", timesheet.display_name).strip("_")
-        or "Timesheet"
+        re.sub(r"[^A-Za-z0-9]+", "_", timesheet.display_name).strip("_") or "Timesheet"
     )
     filename = f"{safe_name}_Timesheet_{context['month']:02d}_{context['year']}.xlsx"
     return Response(

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Alexandru Fikl <alexfikl@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Romanian public holidays and weekday helpers.
 
 Implemented directly (no third-party dependency) so the app deploys with a

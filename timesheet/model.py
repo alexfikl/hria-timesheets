@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Alexandru Fikl <alexfikl@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """In-memory model for a timesheet plus its validation rules."""
 
 from __future__ import annotations
@@ -146,9 +149,7 @@ def validate(ts: Timesheet) -> list[Issue]:
             for j in range(i + 1, len(per_project)):
                 index_a, ranges_a = per_project[i]
                 index_b, ranges_b = per_project[j]
-                if any(
-                    intervals.overlap(a, b) for a in ranges_a for b in ranges_b
-                ):
+                if any(intervals.overlap(a, b) for a in ranges_a for b in ranges_b):
                     issues.append(
                         Issue(
                             day,

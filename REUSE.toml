@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: 2026 Alexandru Fikl <alexfikl@gmail.com>
+# SPDX-License-Identifier: CC0-1.0
+
+version = 1
+SPDX-PackageName = "timesheets"
+SPDX-PackageSupplier = "Alexandru Fikl <alexfikl@gmail.com>"
+
+[[annotations]]
+path = [
+    "justfile",
+    "README.md",
+    "pyproject.toml",
+    "uv.lock",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Alexandru Fikl <alexfikl@gmail.com>"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = [".gitignore", "render.yaml"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Alexandru Fikl <alexfikl@gmail.com>"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = ["templates/anexa1_blank.xlsx"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Alexandru Fikl <alexfikl@gmail.com>"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = ["web/static/htmx.min.js"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Big Sky Software / htmx contributors"
+SPDX-License-Identifier = "0BSD"

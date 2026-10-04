@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Alexandru Fikl <alexfikl@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Fill a copy of the official Anexa 1 template with a :class:`Timesheet`.
 
 The template is shipped blanked (no personal data) with 31 day rows; see
@@ -106,9 +109,9 @@ def render(ts, gray: bool = True, write_date: bool = True) -> bytes:
                 ws.cell(row, interval_col),
                 (cell.interval or "").strip() or None if cell else None,
             )
-        ws.cell(row, total_col).value = (
-            f"=SUM(C{row}:{get_column_letter(total_col - 1)}{row})"
-        )
+        ws.cell(
+            row, total_col
+        ).value = f"=SUM(C{row}:{get_column_letter(total_col - 1)}{row})"
 
     # Blank out day rows beyond the current month (e.g. 31 in a 30-day month).
     for day in range(days + 1, 32):
@@ -119,13 +122,13 @@ def render(ts, gray: bool = True, write_date: bool = True) -> bytes:
 
     for index in range(count):
         letter = get_column_letter(3 + 2 * index)
-        ws.cell(TOTAL_ROW, 3 + 2 * index).value = (
-            f"=SUM({letter}{DAY_FIRST_ROW}:{letter}{LAST_DAY_ROW})"
-        )
+        ws.cell(
+            TOTAL_ROW, 3 + 2 * index
+        ).value = f"=SUM({letter}{DAY_FIRST_ROW}:{letter}{LAST_DAY_ROW})"
     total_letter = get_column_letter(total_col)
-    ws.cell(TOTAL_ROW, total_col).value = (
-        f"=SUM({total_letter}{DAY_FIRST_ROW}:{total_letter}{LAST_DAY_ROW})"
-    )
+    ws.cell(
+        TOTAL_ROW, total_col
+    ).value = f"=SUM({total_letter}{DAY_FIRST_ROW}:{total_letter}{LAST_DAY_ROW})"
 
     _set_text(
         ws["B47"],

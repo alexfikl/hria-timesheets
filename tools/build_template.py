@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Alexandru Fikl <alexfikl@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Build a blank, 31-day Anexa 1 template from the official filled file.
 
 The official file has only 30 day rows (rows 14-43), a total row (44) and a
@@ -21,6 +24,7 @@ from pathlib import Path
 
 import openpyxl
 from openpyxl.styles import PatternFill
+from openpyxl.utils import get_column_letter
 
 COLS = range(2, 10)  # B..I
 DAY_FIRST_ROW = 14
@@ -79,9 +83,7 @@ def build(src_path: Path, out_path: Path) -> None:
     for col in COLS:
         _copy_style(ws.cell(DAY_LAST_ROW, col), ws.cell(DAY_LAST_ROW + 1, col))
     ws.cell(DAY_LAST_ROW + 1, 2).value = 31
-    ws.row_dimensions[DAY_LAST_ROW + 1].height = ws.row_dimensions[
-        DAY_LAST_ROW
-    ].height
+    ws.row_dimensions[DAY_LAST_ROW + 1].height = ws.row_dimensions[DAY_LAST_ROW].height
 
     # 5. Scrub personal / example data left over from the source file.
     for coord in ("B4", "F6", "F7", "F8", "F9", "F10", "F11", "C12", "E12", "G12"):
@@ -102,10 +104,10 @@ def build(src_path: Path, out_path: Path) -> None:
     # 7. Totals row (now 45) gets fresh formulas over 31 days.
     total_row = new_last_day + 1  # 45
     for col in (3, 5, 7, 9):
-        letter = openpyxl.utils.get_column_letter(col)
-        ws.cell(total_row, col).value = (
-            f"=SUM({letter}{DAY_FIRST_ROW}:{letter}{new_last_day})"
-        )
+        letter = get_column_letter(col)
+        ws.cell(
+            total_row, col
+        ).value = f"=SUM({letter}{DAY_FIRST_ROW}:{letter}{new_last_day})"
 
     # 8. Footer personal data (shifted coordinates).
     ws["B47"] = None  # "Numele si prenumele persoana: ..."

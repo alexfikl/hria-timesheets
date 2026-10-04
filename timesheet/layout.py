@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Alexandru Fikl <alexfikl@gmail.com>
+# SPDX-License-Identifier: MIT
+
 """Resize the contract columns of the Anexa 1 sheet to fit the number of projects.
 
 The shipped template has 3 contract column pairs (C/D, E/F, G/H) and a total
