@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Generator pontaj — Anexa 1</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://unpkg.com/htmx.org@2.0.6" defer></script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="hero">
+    <h1>Generator fișă de pontaj</h1>
+    <p>Anexa 1 · completează datele și intervalele orare, apoi descarcă fișierul Excel.</p>
+  </header>
+
+  <main class="container">
+    <form id="form" method="post" action="/generate">
+      <section class="card">
+        <h2>Date de identificare</h2>
+        <div class="fields rows">
+          <label>Nume<input name="family_name" value="{{ family_name }}" autocomplete="family-name"></label>
+          <label>Prenume<input name="given_name" value="{{ given_name }}" autocomplete="given-name"></label>
+          <label class="span2">CNP<input name="cnp" value="{{ cnp }}" inputmode="numeric"></label>
+          <label class="span2">Funcția în proiect<input name="function" value="{{ function }}"></label>
+          <label>Corespondență limită (euro/oră)<input name="euro_rate" value="{{ euro_rate }}"></label>
+          <label>Echivalent în lei (RON/oră)<input name="ron_rate" value="{{ ron_rate }}"></label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Perioada</h2>
+        <div class="fields">
+          <label>Luna
+            <select name="month" hx-post="/partial" hx-target="#workspace" hx-swap="outerHTML" hx-include="#form" hx-trigger="change">
+              {% for m in months %}
+              <option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ months[m] }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>Anul
+            <input type="number" name="year" min="2000" max="2100" value="{{ year }}"
+                   hx-post="/partial" hx-target="#workspace" hx-swap="outerHTML" hx-include="#form" hx-trigger="change">
+          </label>
+          <label>Număr de contracte
+            <input type="number" name="count" min="1" max="{{ max_contracts }}" step="1" value="{{ count }}"
+                   hx-post="/partial" hx-target="#workspace" hx-swap="outerHTML" hx-include="#form" hx-trigger="change">
+          </label>
+        </div>
+        <label class="check-inline">
+          <input type="checkbox" name="gray" value="1" {% if gray %}checked{% endif %}>
+          <span>Evidențiază weekend/sărbători</span>
+        </label>
+        <input type="hidden" name="gray" value="0">
+      </section>
+
+      {% include "_workspace.html" %}
+
+      {% if errors or warnings %}
+      <section class="messages">
+        {% for e in errors %}<p class="msg error">{{ e.message }}</p>{% endfor %}
+        {% for w in warnings %}<p class="msg warning">{{ w.message }}</p>{% endfor %}
+      </section>
+      {% endif %}
+
+      <div class="actions">
+        <span class="total">Total ore în lună: <strong id="grand-total">{{ '%g'|format(total) }}</strong></span>
+        <button type="submit" class="primary">Generează fișierul Excel</button>
+      </div>
+    </form>
+  </main>
+</body>
+</html>

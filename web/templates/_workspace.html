@@ -1,0 +1,61 @@
+{# Project inputs + editable day grid. Rendered standalone for HTMX swaps. #}
+<div id="workspace">
+  <section class="card">
+    <h2>Proiecte / contracte</h2>
+    <div class="projects">
+      {% for i in range(count) %}
+      <div class="project">
+        <div class="project-head">
+          <span class="badge">Proiect {{ i + 1 }}</span>
+          {% if i == 0 %}<span class="badge nb">Norma de Bază (NB)</span>{% endif %}
+        </div>
+        <label>Nr. contract / act (CIM)
+          <input name="contract_{{ i }}" value="{{ contracts[i].contract }}" placeholder="CIM - DD/MM/YYYY">
+        </label>
+        <label>Proiect
+          <input name="project_{{ i }}" value="{{ contracts[i].project }}" placeholder="Acronim proiect">
+        </label>
+        {% if i == 0 %}
+        <p class="nb-note">Normă de Bază — fără ore maxime.</p>
+        {% else %}
+        <label>Ore maxime (pe lună)
+          <input type="number" name="max_hours_{{ i }}" min="0" step="0.5" value="{{ contracts[i].max_hours }}" placeholder="ex: 40">
+        </label>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Ore lucrate</h2>
+    <p class="hint">Completează doar intervalele; orele se calculează automat. Poți pune mai multe intervale: <code>8:00-12:00; 16:00-20:00</code>. Weekendurile nu pot fi completate.</p>
+    <p id="live-issues" class="msg error" hidden></p>
+    <div class="table-wrap">
+      <table class="grid">
+        <thead>
+          <tr>
+            <th rowspan="2" class="sticky-col">Ziua</th>
+            <th rowspan="2">Zi</th>
+            {% for i in range(count) %}<th colspan="2" data-project-header="{{ i }}">{% if i == 0 %}Norma de Bază{% else %}{{ contracts[i].project or ('Proiect ' ~ (i + 1)) }}{% endif %}</th>{% endfor %}
+          </tr>
+          <tr>
+            {% for i in range(count) %}<th>Ore</th><th>Interval</th>{% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in days %}
+          <tr class="{{ d.css }}" data-day="{{ d.day }}" title="{{ d.label }}">
+            <td class="sticky-col">{{ d.day }}</td>
+            <td class="weekday">{{ d.weekday }}</td>
+            {% for i in range(count) %}
+            <td class="hours" data-hours-for="interval_{{ d.day }}_{{ i }}">{% if not d.blocked %}{{ d.hours[i] }}{% endif %}</td>
+            <td><input type="text" name="interval_{{ d.day }}_{{ i }}" value="{{ d.intervals[i] }}" placeholder="8:00-12:00" {% if d.blocked %}disabled aria-disabled="true"{% endif %}></td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
