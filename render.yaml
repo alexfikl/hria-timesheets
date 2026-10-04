@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: pontaj-anexa1
+    name: hria-timesheets
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt

@@ -81,17 +81,27 @@ tools/build_template.py      rebuild templates/anexa1_blank.xlsx
 templates/anexa1_blank.xlsx  blanked 31-day, 3-contract base template
 ```
 
-HTMX is loaded from a CDN and used only as progressive enhancement (updating the
-grid when the month or contract count changes). The app works without it; the
-grid simply refreshes when the form is submitted.
+HTMX is vendored locally in `web/static/htmx.min.js` and used only as progressive
+enhancement (updating the grid when the month or contract count changes). The app
+works without it; the grid simply refreshes when the form is submitted.
+
+## Security
+
+- Text written into the workbook is stored as literal strings, so a value
+  starting with `=` cannot become an Excel formula (formula injection).
+- HTMX is served from our own `/static`, not a third-party CDN.
+- Every response sets `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+  `Referrer-Policy: no-referrer` and a restrictive `Content-Security-Policy`.
+- Dependencies are pinned in `requirements.txt`.
+- The app stores nothing and form bodies are not logged.
 
 ## Notes / limitations
 
 - The UI allows up to 12 contracts. The sheet grows to fit; there is no hard
   architectural ceiling, only the number in `MAX_CONTRACTS` (`timesheet/model.py`).
 - `templates/anexa1_blank.xlsx` is generated from the official file with all
-  personal data removed. **Never commit the filled source file** — it contains
-  someone's CNP.
+  personal data removed, and is **required at runtime**. The `.gitignore`
+  ignores `*.xlsx` but force-includes this file — make sure it is committed.
 - Romanian holidays are computed for 1900–2099. If you need other countries,
   add a calendar module.
 - Importing `pontaj_*.xlsx` is a planned next step, not implemented yet.

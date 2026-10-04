@@ -34,8 +34,10 @@ def _bool(value: Any, default: bool = True) -> bool:
     return str(value).strip().lower() in ("1", "true", "on", "da", "yes")
 
 
-def _text(value: Any) -> str:
-    return str(value).strip() if value is not None else ""
+def _text(value: Any, limit: int = 200) -> str:
+    if value is None:
+        return ""
+    return str(value).strip()[:limit]
 
 
 def _clamp(value: int, low: int, high: int) -> int:

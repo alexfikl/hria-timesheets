@@ -3,3 +3,4 @@ __pycache__/
 .venv/
 .~lock.*
 *.xlsx
+!templates/anexa1_blank.xlsx

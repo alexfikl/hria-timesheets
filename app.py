@@ -32,6 +32,26 @@ app.mount(
 
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
+SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
+    "Content-Security-Policy": (
+        "default-src 'self'; img-src 'self' data:; style-src 'self'; "
+        "script-src 'self'; connect-src 'self'; base-uri 'self'; "
+        "form-action 'self'; frame-ancestors 'none'"
+    ),
+}
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    for name, value in SECURITY_HEADERS.items():
+        response.headers.setdefault(name, value)
+    return response
+
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):

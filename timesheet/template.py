@@ -51,6 +51,13 @@ def _maybe_number(value: str):
     return int(text) if text.isdigit() else text
 
 
+def _set_text(cell, value) -> None:
+    """Write text as a literal string so Excel never evaluates it as a formula."""
+    cell.value = value
+    if isinstance(value, str):
+        cell.data_type = "s"
+
+
 def _value_column(count: int) -> int:
     """Column holding the personal fields in rows 6-11 (F, or D for one contract)."""
     return 6 if count >= 2 else 4
@@ -79,10 +86,10 @@ def render(ts, gray: bool = True, write_date: bool = True) -> bytes:
         ts.leader or None,
     ]
     for offset, value in enumerate(personal):
-        ws.cell(6 + offset, value_col).value = value
+        _set_text(ws.cell(6 + offset, value_col), value)
 
     for index, project in enumerate(ts.projects):
-        ws.cell(12, 3 + 2 * index).value = project.header
+        _set_text(ws.cell(12, 3 + 2 * index), project.header)
 
     days = ts.days_in_month
     for day in range(1, days + 1):
@@ -95,8 +102,9 @@ def render(ts, gray: bool = True, write_date: bool = True) -> bytes:
             ws.cell(row, hours_col).value = (
                 float(cell.hours) if cell and cell.hours else None
             )
-            ws.cell(row, interval_col).value = (
-                (cell.interval or "").strip() or None if cell else None
+            _set_text(
+                ws.cell(row, interval_col),
+                (cell.interval or "").strip() or None if cell else None,
             )
         ws.cell(row, total_col).value = (
             f"=SUM(C{row}:{get_column_letter(total_col - 1)}{row})"
@@ -119,16 +127,21 @@ def render(ts, gray: bool = True, write_date: bool = True) -> bytes:
         f"=SUM({total_letter}{DAY_FIRST_ROW}:{total_letter}{LAST_DAY_ROW})"
     )
 
-    ws["B47"] = (
-        f"Numele şi prenumele persoană: {ts.display_name}" if ts.display_name else None
+    _set_text(
+        ws["B47"],
+        f"Numele şi prenumele persoană: {ts.display_name}" if ts.display_name else None,
     )
     if write_date:
         last_day = date(ts.year, ts.month, days)
-        ws["B49"] = f"Data: {last_day.day:02d}.{last_day.month:02d}.{last_day.year}"
-    ws["B51"] = (
+        _set_text(
+            ws["B49"],
+            f"Data: {last_day.day:02d}.{last_day.month:02d}.{last_day.year}",
+        )
+    _set_text(
+        ws["B51"],
         f"Luat la cunoștință de către Responsabil Lider/Partener: {ts.leader}"
         if ts.leader
-        else None
+        else None,
     )
 
     if gray:
