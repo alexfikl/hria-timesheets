@@ -357,6 +357,25 @@
     syncProjectHeaders();
   }
 
+  // Mirror the current form into the import request so uploaded values merge
+  // with whatever is already filled in.
+  function snapshotMainForm() {
+    const form = document.getElementById("form");
+    const target = document.getElementById("import-state");
+    if (!form || !target) return;
+    target.innerHTML = "";
+    new FormData(form).forEach(function (value, key) {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = key;
+      input.value = value;
+      target.appendChild(input);
+    });
+  }
+
+  const importForm = document.querySelector("form.import-form");
+  if (importForm) importForm.addEventListener("submit", snapshotMainForm);
+
   document.addEventListener("htmx:afterSwap", refreshAll);
   document.addEventListener("DOMContentLoaded", refreshAll);
 })();

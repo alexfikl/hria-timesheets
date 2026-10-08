@@ -66,26 +66,35 @@ async def index(request: Request):
 
 
 @app.post("/import", response_class=HTMLResponse)
-async def import_pontaj(request: Request, file: UploadFile | None = None):
-    """Pre-fill the form from an uploaded ``pontaj_*.xlsx`` workbook."""
-    if file is None:
-        file = File(...)
+async def import_pontaj(request: Request):
+    """Pre-fill the form from an uploaded ``pontaj_*.xlsx`` workbook.
 
-    data = await file.read()
+    The current form is submitted alongside the file (see ``app.js``); values
+    the workbook does not provide are kept, everything else is overwritten.
+    """
+    form = await request.form()
+    upload = form.get("file")
+    existing = {key: form.get(key) for key in form if key != "file"}
+
     import_errors: list[str] = []
-    values: dict[str, str] = {}
+    imported: dict[str, str] = {}
+    data = b""
+    if upload is not None and not isinstance(upload, str):
+        data = await upload.read()
 
-    if len(data) > MAX_IMPORT_BYTES:
+    if not data:
+        import_errors.append("Selectați un fișier de importat.")  # spell: disable
+    elif len(data) > MAX_IMPORT_BYTES:
         import_errors.append("Fișierul este prea mare (maxim 5 MB).")
     else:
         try:
-            values = parse_pontaj(data)
+            imported = parse_pontaj(data)
         except PontajImportError as exc:
             import_errors.append(str(exc))
 
-    _timesheet, context = build_context(values)
+    _timesheet, context = build_context({**existing, **imported})
     context["import_errors"] = import_errors
-    context["imported"] = bool(values)
+    context["imported"] = bool(imported)
     return templates.TemplateResponse(request, "index.html", context)
 
 
