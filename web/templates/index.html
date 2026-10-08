@@ -11,13 +11,32 @@
   <script src="/static/htmx.min.js" defer></script>
   <script src="/static/app.js" defer></script>
 </head>
-<body>
+<body data-imported="{{ '1' if imported else '' }}">
   <header class="hero">
     <h1>Generator fișă de pontaj</h1>
     <p>Anexa 1 · completează datele și intervalele orare, apoi descarcă fișierul Excel.</p>
   </header>
 
   <main class="container">
+    <form class="card import-form" method="post" action="/import" enctype="multipart/form-data">
+      <h2>Importă dintr-un pontaj Excel</h2>
+      <p class="hint">
+        Accesează <a href="https://api.hr.uvt.ro/pontaj_proiecte" target="_blank" rel="noopener noreferrer">api.hr.uvt.ro/pontaj_proiecte</a>
+        și completează-ți pontajul ca de obicei. După ce ai completat formularul,
+        descarcă fișierul din <strong>Opțiuni &gt; Excel</strong>, apoi încarcă-l aici
+        pentru a completa automat datele, proiectele și intervalele orare.
+      </p>
+      <label>Fișier pontaj (.xlsx)
+        <input type="file" name="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
+      </label>
+      <button type="submit" class="primary">Importă</button>
+      {% if import_errors %}
+      <section class="messages">
+        {% for e in import_errors %}<p class="msg error">{{ e }}</p>{% endfor %}
+      </section>
+      {% endif %}
+    </form>
+
     <form id="form" method="post" action="/generate">
       <section class="card">
         <h2>Date de identificare</h2>

@@ -1,4 +1,4 @@
-PYTHON := 'uv run python'
+PYTHON := 'python'
 PY_SOURCES := 'app.py timesheet web tools'
 BLANK_TEMPLATE := 'templates/anexa1_blank.xlsx'
 
@@ -17,13 +17,13 @@ format: isort black pyproject justfmt
 
 [doc('Run ruff isort fixes over the source code')]
 isort:
-    uv run ruff check --fix --select=I {{ PY_SOURCES }}
-    uv run ruff check --fix --select=RUF022 {{ PY_SOURCES }}
+    ruff check --fix --select=I {{ PY_SOURCES }}
+    ruff check --fix --select=RUF022 {{ PY_SOURCES }}
     @echo -e "\e[1;32mruff isort clean!\e[0m"
 
 [doc('Run ruff format over the source code')]
 black:
-    uv run ruff format {{ PY_SOURCES }}
+    ruff format {{ PY_SOURCES }}
     @echo -e "\e[1;32mruff format clean!\e[0m"
 
 [doc('Run pyproject-fmt over the configuration')]
@@ -44,7 +44,7 @@ lint: typos reuse ruff ty
 
 [doc('Run typos over the source code and documentation')]
 typos:
-    uv run typos --sort
+    typos --sort
     @echo -e "\e[1;32mtypos clean!\e[0m"
 
 [doc('Check REUSE license compliance')]
@@ -54,12 +54,12 @@ reuse:
 
 [doc('Run ruff checks over the source code')]
 ruff:
-    uv run ruff check {{ PY_SOURCES }}
+    ruff check {{ PY_SOURCES }}
     @echo -e "\e[1;32mruff clean!\e[0m"
 
 [doc('Run ty checks over the source code')]
 ty:
-    uv run ty check {{ PY_SOURCES }}
+    ty check {{ PY_SOURCES }}
     @echo -e "\e[1;32mty clean!\e[0m"
 
 # }}}

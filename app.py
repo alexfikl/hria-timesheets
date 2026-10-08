@@ -18,11 +18,14 @@ from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from timesheet.import_xlsx import PontajImportError, parse_pontaj
 from timesheet.model import validate
 from timesheet.template import render
 from web.forms import build_context
 
 BASE_DIR = Path(__file__).resolve().parent
+
+MAX_IMPORT_BYTES = 5 * 1024 * 1024
 
 templates = Jinja2Templates(directory=str(BASE_DIR / "web" / "templates"))
 
@@ -59,6 +62,30 @@ async def add_security_headers(request: Request, call_next):
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     _timesheet, context = build_context({})
+    return templates.TemplateResponse(request, "index.html", context)
+
+
+@app.post("/import", response_class=HTMLResponse)
+async def import_pontaj(request: Request, file: UploadFile | None = None):
+    """Pre-fill the form from an uploaded ``pontaj_*.xlsx`` workbook."""
+    if file is None:
+        file = File(...)
+
+    data = await file.read()
+    import_errors: list[str] = []
+    values: dict[str, str] = {}
+
+    if len(data) > MAX_IMPORT_BYTES:
+        import_errors.append("Fișierul este prea mare (maxim 5 MB).")
+    else:
+        try:
+            values = parse_pontaj(data)
+        except PontajImportError as exc:
+            import_errors.append(str(exc))
+
+    _timesheet, context = build_context(values)
+    context["import_errors"] = import_errors
+    context["imported"] = bool(values)
     return templates.TemplateResponse(request, "index.html", context)
 
 

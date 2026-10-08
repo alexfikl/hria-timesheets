@@ -118,6 +118,18 @@
     saveStore(store);
   }
 
+  // After a server-side import, overwrite the stored copy with the freshly
+  // rendered values so restoreFields() cannot replace them with stale data.
+  function persistImported() {
+    const store = loadStore();
+    document.querySelectorAll("input, select").forEach(function (input) {
+      if (input.name && PERSIST_FIELD.test(input.name)) {
+        store[input.name] = input.value;
+      }
+    });
+    saveStore(store);
+  }
+
   function restoreFields() {
     const store = loadStore();
     document.querySelectorAll(SAVED_INPUTS).forEach(function (input) {
@@ -335,6 +347,10 @@
   });
 
   function refreshAll() {
+    if (document.body && document.body.dataset.imported === "1") {
+      persistImported();
+      document.body.removeAttribute("data-imported");
+    }
     restoreFields();
     restoreCount();
     validateAll();

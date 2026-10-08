@@ -59,3 +59,5 @@ lint.isort.known-first-party = [ "timesheet" ]
 
 [tool.typos]
 files.extend-exclude = [ "web/static/htmx.min.js" ]
+default.extend-ignore-re = [ "(?Rm)^.*#\\s*spell:\\s*disable$" ]
+
