@@ -20,6 +20,7 @@ from __future__ import annotations
 import calendar
 import math
 import re
+import zipfile
 from datetime import date
 from io import BytesIO
 from typing import Any
@@ -36,6 +37,7 @@ NB_INTERVAL = "8:00-16:00"
 PROJECT_START = 16 * 60  # projects start right after the NB, at 16:00
 MAX_DAY = 31
 MAX_ROWS = 1000  # guard against workbooks whose max_row is huge but mostly empty
+MAX_UNCOMPRESSED_BYTES = 50 * 1024 * 1024
 
 
 class PontajImportError(ValueError):
@@ -133,8 +135,14 @@ def parse_pontaj(data: bytes) -> dict[str, str]:
         raise PontajImportError("Fișierul încărcat este gol.")
 
     try:
+        with zipfile.ZipFile(BytesIO(data)) as zf:
+            uncompressed = sum(info.file_size for info in zf.infolist())
+            if uncompressed > MAX_UNCOMPRESSED_BYTES:
+                raise PontajImportError("Fișierul este prea mare la decomprimare.")  # spell: disable
         wb = openpyxl.load_workbook(BytesIO(data), data_only=True)
-    except Exception as exc:  # openpyxl raises several unrelated types
+    except PontajImportError:
+        raise
+    except Exception as exc:  # openpyxl and zipfile raise several unrelated types
         raise PontajImportError("Fișierul nu este un document Excel valid.") from exc
 
     ws = _select_sheet(wb)

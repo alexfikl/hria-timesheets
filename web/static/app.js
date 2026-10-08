@@ -15,10 +15,10 @@
 
   const STORE_KEY = "hrtimesheets.form";
   const PERSIST_FIELD =
-    /^(?:family_name|given_name|cnp|function|euro_rate|ron_rate|count|(?:contract|project|max_hours)_\d+)$/;
+    /^(?:family_name|given_name|function|euro_rate|ron_rate|count|(?:contract|project|max_hours)_\d+)$/;
   const SAVED_INPUTS =
     'input[name^="contract_"], input[name^="project_"], input[name^="max_hours_"], ' +
-    'input[name="family_name"], input[name="given_name"], input[name="cnp"], ' +
+    'input[name="family_name"], input[name="given_name"], ' +
     'input[name="function"], input[name="euro_rate"], input[name="ron_rate"]';
 
   const RANGE_RE = /(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/g;
@@ -126,6 +126,10 @@
       cachedStore = JSON.parse(window.localStorage.getItem(STORE_KEY)) || {};
     } catch (err) {
       cachedStore = {};
+    }
+    if (cachedStore && cachedStore.cnp !== undefined) {
+      delete cachedStore.cnp;
+      saveStore(cachedStore);
     }
     return cachedStore;
   }
@@ -418,6 +422,23 @@
 
   const importForm = document.querySelector("form.import-form");
   if (importForm) importForm.addEventListener("submit", snapshotMainForm);
+
+  const clearBtn = document.getElementById("clear-store");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", function () {
+      if (
+        window.confirm(
+          "Sigur doriți să ștergeți datele salvate din acest browser?"
+        )
+      ) {
+        cachedStore = {};
+        try {
+          window.localStorage.removeItem(STORE_KEY);
+        } catch (err) {}
+        window.location.reload();
+      }
+    });
+  }
 
   window.addEventListener("beforeunload", flushStore);
   document.addEventListener("htmx:afterSwap", refreshAll);

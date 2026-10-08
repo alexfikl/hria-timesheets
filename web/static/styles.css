@@ -294,6 +294,29 @@ table.grid input[type="text"] { min-width: 10.5rem; }
 .total { color: var(--muted); font-size: .95rem; }
 .total strong { color: var(--ink); font-size: 1.15rem; }
 
+.actions-buttons {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+button.secondary {
+  font: inherit;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: .7rem 1.1rem;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+
+button.secondary:hover {
+  color: var(--ink);
+  border-color: var(--brand);
+}
+
 button.primary {
   font: inherit;
   font-weight: 700;
@@ -316,7 +339,8 @@ button.primary:disabled {
 
 @media (max-width: 640px) {
   .actions { flex-direction: column-reverse; align-items: stretch; }
-  button.primary { width: 100%; }
+  .actions-buttons { flex-direction: column; width: 100%; }
+  button.primary, button.secondary { width: 100%; }
   .fields.rows { grid-template-columns: 1fr; }
   .fields .span2 { grid-column: auto; }
 }

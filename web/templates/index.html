@@ -88,7 +88,10 @@
 
       <div class="actions">
         <span class="total">Total ore în lună: <strong id="grand-total">{{ '%g'|format(total) }}</strong></span>
-        <button type="submit" class="primary">Generează fișierul Excel</button>
+        <div class="actions-buttons">
+          <button type="button" id="clear-store" class="secondary">Șterge datele salvate</button>
+          <button type="submit" class="primary">Generează fișierul Excel</button>
+        </div>
       </div>
     </form>
   </main>
