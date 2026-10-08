@@ -138,7 +138,9 @@ def parse_pontaj(data: bytes) -> dict[str, str]:
         with zipfile.ZipFile(BytesIO(data)) as zf:
             uncompressed = sum(info.file_size for info in zf.infolist())
             if uncompressed > MAX_UNCOMPRESSED_BYTES:
-                raise PontajImportError("Fișierul este prea mare la decomprimare.")  # spell: disable
+                raise PontajImportError(
+                    "Fișierul este prea mare la decomprimare."
+                )  # spell: disable
         wb = openpyxl.load_workbook(BytesIO(data), data_only=True)
     except PontajImportError:
         raise
