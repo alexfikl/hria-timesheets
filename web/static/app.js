@@ -21,7 +21,7 @@
     'input[name="family_name"], input[name="given_name"], input[name="cnp"], ' +
     'input[name="function"], input[name="euro_rate"], input[name="ron_rate"]';
 
-  const RANGE_PATTERN = "(\\d{1,2}):(\\d{2})\\s*-\\s*(\\d{1,2}):(\\d{2})";
+  const RANGE_RE = /(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/g;
 
   function parseNumber(text) {
     const value = parseFloat(String(text).replace(",", "."));
@@ -38,16 +38,25 @@
   function parseRanges(text) {
     const trimmed = (text || "").trim();
     if (!trimmed) return [];
-    const re = new RegExp(RANGE_PATTERN, "g");
+    RANGE_RE.lastIndex = 0;
     const ranges = [];
     let found = false;
     let match;
-    while ((match = re.exec(trimmed)) !== null) {
+    while ((match = RANGE_RE.exec(trimmed)) !== null) {
       const sh = Number(match[1]);
       const sm = Number(match[2]);
       const eh = Number(match[3]);
       const em = Number(match[4]);
-      if (sh > 24 || eh > 24 || sm > 59 || em > 59) return null;
+      if (
+        sh > 24 ||
+        eh > 24 ||
+        sm > 59 ||
+        em > 59 ||
+        (sh === 24 && sm > 0) ||
+        (eh === 24 && em > 0)
+      ) {
+        return null;
+      }
       const start = sh * 60 + sm;
       const end = eh * 60 + em;
       if (end <= start) return null;
@@ -55,9 +64,12 @@
       found = true;
     }
     const leftover = trimmed
-      .replace(new RegExp(RANGE_PATTERN, "g"), "")
+      .replace(RANGE_RE, "")
       .replace(/[\s,;]+/g, "");
     if (leftover || !found) return null;
+    ranges.sort(function (a, b) {
+      return a[0] - b[0];
+    });
     return ranges;
   }
 
@@ -92,7 +104,7 @@
   }
 
   function setGenerateEnabled(enabled) {
-    const button = document.querySelector("button.primary");
+    const button = document.querySelector("#form button.primary");
     if (button) button.disabled = !enabled;
   }
 
@@ -205,11 +217,13 @@
   function validateAll() {
     const errors = [];
     let badFormat = 0;
+    const parsedCache = new Map();
 
     // 1. Format each interval and recompute its hours cell.
     document.querySelectorAll('input[name^="interval_"]').forEach(function (input) {
       input.classList.remove("invalid");
       const ranges = parseRanges(input.value);
+      parsedCache.set(input, ranges);
       const cell = hoursCell(input.name);
       if (ranges === null) {
         badFormat += 1;
@@ -240,8 +254,8 @@
       let overlap = false;
       const ranges = [];
       row.querySelectorAll('input[name^="interval_"]').forEach(function (input) {
-        const parsed = parseRanges(input.value);
-        if (parsed === null) return;
+        const parsed = parsedCache.get(input);
+        if (!parsed) return;
         parsed.forEach(function (r) {
           total += (r[1] - r[0]) / 60;
           ranges.push({ start: r[0], end: r[1], input: input });
@@ -274,11 +288,10 @@
       input.classList.remove("invalid");
     });
     const projectTotals = {};
-    document.querySelectorAll('input[name^="interval_"]').forEach(function (input) {
+    parsedCache.forEach(function (parsed, input) {
+      if (!parsed) return;
       const match = input.name.match(/^interval_\d+_(\d+)$/);
       if (!match) return;
-      const parsed = parseRanges(input.value);
-      if (parsed === null) return;
       const index = Number(match[1]);
       projectTotals[index] = (projectTotals[index] || 0) + sumHours(parsed);
     });
@@ -342,7 +355,7 @@
       syncRon();
       return;
     }
-    if ((input.name || "").indexOf("project_") === 0) {
+    if ((input.name || "").startsWith("project_")) {
       syncProjectHeaders();
     }
   });
