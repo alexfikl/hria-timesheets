@@ -78,19 +78,20 @@ async def import_pontaj(request: Request):
 
     import_errors: list[str] = []
     imported: dict[str, str] = {}
-    data = b""
-    if upload is not None and not isinstance(upload, str):
-        data = await upload.read()
 
-    if not data:
+    if upload is None or isinstance(upload, str):
         import_errors.append("Selectați un fișier de importat.")  # spell: disable
-    elif len(data) > MAX_IMPORT_BYTES:
+    elif (upload.size or 0) > MAX_IMPORT_BYTES:
         import_errors.append("Fișierul este prea mare (maxim 5 MB).")
     else:
-        try:
-            imported = parse_pontaj(data)
-        except PontajImportError as exc:
-            import_errors.append(str(exc))
+        data = await upload.read()
+        if len(data) > MAX_IMPORT_BYTES:
+            import_errors.append("Fișierul este prea mare (maxim 5 MB).")
+        else:
+            try:
+                imported = parse_pontaj(data)
+            except PontajImportError as exc:
+                import_errors.append(str(exc))
 
     _timesheet, context = build_context({**existing, **imported})
     context["import_errors"] = import_errors

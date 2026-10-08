@@ -10,9 +10,9 @@ so the regular :func:`web.forms.build_context` parsing and validation still
 apply.
 
 The NB (main job) is not encoded in the file: it is always the standard
-``8:00-16:00`` day, filled on every weekday of the month. Each file row becomes a
-project worked after the NB, from ``16:00``, and the rows are stacked in order
-when they share a day.
+``8:00-16:00`` day, filled on every working day of the month. Each file row
+becomes a project worked after the NB, from ``16:00``, and the rows are stacked
+in order when they share a day.
 """
 
 from __future__ import annotations
@@ -23,9 +23,12 @@ from io import BytesIO
 from typing import Any
 
 import openpyxl
+from openpyxl import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
 
-# BNR reference rate used to derive the euro limit from the RON one.
-EUR_RON_RATE = 4.9765
+from . import intervals
+from .holidays import is_weekend, ro_holidays
+from .model import EUR_RON_RATE
 
 NB_INTERVAL = "8:00-16:00"
 PROJECT_START = 16 * 60  # projects start right after the NB, at 16:00
@@ -56,15 +59,7 @@ def _format_number(value: float) -> str:
     return f"{value:g}"
 
 
-def _format_range(start: int, end: int) -> str:
-    def hm(minutes: int) -> str:
-        hour, minute = divmod(minutes, 60)
-        return f"{hour}:{minute:02d}"
-
-    return f"{hm(start)}-{hm(end)}"
-
-
-def _header_row(ws) -> tuple[int, dict[str, int]]:
+def _header_row(ws: Worksheet) -> tuple[int, dict[str, int]]:
     """Find the header row and return its ``{lowercased name: column}`` map."""
     limit = min(ws.max_row or 1, 10)
     for row in range(1, limit + 1):
@@ -81,13 +76,15 @@ def _header_row(ws) -> tuple[int, dict[str, int]]:
     )
 
 
-def _select_sheet(wb):
+def _select_sheet(wb: Workbook) -> Worksheet:
     if "Pontaj" in wb.sheetnames:
         return wb["Pontaj"]
     return wb.active
 
 
-def _read_records(ws, header: int, names: dict[str, int]) -> list[dict[str, Any]]:
+def _read_records(
+    ws: Worksheet, header: int, names: dict[str, int]
+) -> list[dict[str, Any]]:
     day_columns = {
         day: names[f"d{day}"] for day in range(1, MAX_DAY + 1) if f"d{day}" in names
     }
@@ -150,6 +147,9 @@ def parse_pontaj(data: bytes) -> dict[str, str]:
     today = date.today()
     year = int(main["an"]) if main["an"] else today.year
     month = int(main["luna"]) if main["luna"] else today.month
+    # Match the range build_context() accepts so calendar.monthrange() is safe.
+    year = max(2000, min(2100, year))
+    month = max(1, min(12, month))
 
     parts = main["nume"].title().split()
     family_name = parts[0] if parts else ""
@@ -168,14 +168,16 @@ def parse_pontaj(data: bytes) -> dict[str, str]:
         values["ron_rate"] = _format_number(main["tarif"])
         values["euro_rate"] = f"{main['tarif'] / EUR_RON_RATE:.2f}"
 
-    # The NB is the standard 8:00-16:00 day on every weekday of the month.
+    # The NB is the standard 8:00-16:00 day on every working day of the month.
     days_in_month = calendar.monthrange(year, month)[1]
+    holidays = ro_holidays(year)
     for day in range(1, days_in_month + 1):
-        if date(year, month, day).weekday() < 5:
+        current = date(year, month, day)
+        if not is_weekend(current) and current not in holidays:
             values[f"interval_{day}_0"] = NB_INTERVAL
 
     # Each file row is a project worked from 16:00, stacked per day in order.
-    next_start = dict.fromkeys(records[0]["hours"], PROJECT_START)
+    next_start: dict[int, int] = {}
     for offset, record in enumerate(records):
         index = offset + 1  # contract 0 is the NB
         values[f"project_{index}"] = record["domeniu"]
@@ -183,13 +185,15 @@ def parse_pontaj(data: bytes) -> dict[str, str]:
             values[f"max_hours_{index}"] = _format_number(record["ore_cim"])
 
         for day, hours in record["hours"].items():
-            if not hours or hours <= 0:
+            if hours is None or hours <= 0:
                 continue
-            start = next_start[day]
+            start = next_start.get(day, PROJECT_START)
             end = min(start + round(hours * 60), MINUTES_PER_DAY)
             if end <= start:
                 continue
-            values[f"interval_{day}_{index}"] = _format_range(start, end)
+            values[f"interval_{day}_{index}"] = intervals.format(
+                [intervals.TimeRange(start, end)]
+            )
             next_start[day] = end
 
     return values

@@ -10,7 +10,8 @@
     ["expert senior", 33.36],
     ["expert junior", 23.51],
   ];
-  const EURO_TO_RON = 4.9765;
+  // The reference rate lives on the server; it is rendered onto <body>.
+  const EURO_TO_RON = parseFloat(document.body.dataset.euroToRon);
 
   const STORE_KEY = "hrtimesheets.form";
   const PERSIST_FIELD =
@@ -363,7 +364,7 @@
     const form = document.getElementById("form");
     const target = document.getElementById("import-state");
     if (!form || !target) return;
-    target.innerHTML = "";
+    target.replaceChildren();
     new FormData(form).forEach(function (value, key) {
       const input = document.createElement("input");
       input.type = "hidden";

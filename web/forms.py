@@ -16,6 +16,7 @@ from timesheet import intervals
 from timesheet.holidays import ro_holidays, weekday_name, weekday_short
 from timesheet.model import (
     DEFAULT_LEADER,
+    EUR_RON_RATE,
     MAX_CONTRACTS,
     Cell,
     Project,
@@ -155,6 +156,7 @@ def build_context(
         "euro_rate": timesheet.euro_rate,
         "ron_rate": timesheet.ron_rate,
         "leader": timesheet.leader,
+        "euro_to_ron": EUR_RON_RATE,
         "month": month,
         "year": year,
         "count": count,

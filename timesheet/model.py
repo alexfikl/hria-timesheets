@@ -18,6 +18,9 @@ DEFAULT_LEADER = "Prof. Dr. Viorel NEGRU"
 
 CONTRACT_BASE = "Contract Individual de Muncă/Act administrativ de numire. Nr."
 
+# BNR reference rate used to convert the euro limit into lei.
+EUR_RON_RATE = 4.9765
+
 
 @dataclass
 class Project:
