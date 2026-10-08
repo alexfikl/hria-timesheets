@@ -74,6 +74,16 @@ class Timesheet:
     def days_in_month(self) -> int:
         return calendar.monthrange(self.year, self.month)[1]
 
+    @property
+    def total_hours(self) -> float:
+        return sum(cell.hours for cell in self.cells.values())
+
+    def daily_total(self, day: int) -> float:
+        return sum(
+            self.cells.get((day, idx), Cell()).hours
+            for idx in range(len(self.projects))
+        )
+
 
 @dataclass
 class Issue:
@@ -83,9 +93,7 @@ class Issue:
 
 
 def daily_total(ts: Timesheet, day: int) -> float:
-    return sum(
-        ts.cells.get((day, idx), Cell()).hours for idx in range(len(ts.projects))
-    )
+    return ts.daily_total(day)
 
 
 def validate(ts: Timesheet) -> list[Issue]:

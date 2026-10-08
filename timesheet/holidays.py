@@ -11,6 +11,7 @@ offset are valid for 1900-2099, which covers this tool's use.
 from __future__ import annotations
 
 from datetime import date, timedelta
+from functools import cache
 
 WEEKDAYS_RO = [
     "luni",
@@ -38,6 +39,7 @@ def orthodox_easter(year: int) -> date:
     return date(year, month, day) + timedelta(days=13)
 
 
+@cache
 def ro_holidays(year: int) -> dict[date, str]:
     """Map non-working Romanian public holidays to a human-readable name."""
     easter = orthodox_easter(year)

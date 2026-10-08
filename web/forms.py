@@ -27,6 +27,8 @@ from timesheet.template import MONTHS_RO
 
 
 def _int(value: Any, default: int) -> int:
+    if value is None:
+        return default
     try:
         return int(str(value).strip())
     except (TypeError, ValueError):
@@ -167,7 +169,7 @@ def build_context(
         "max_contracts": MAX_CONTRACTS,
         "contracts": contracts,
         "days": _build_days(year, month, count, timesheet.cells),
-        "total": sum(cell.hours for cell in timesheet.cells.values()),
+        "total": timesheet.total_hours,
         "errors": [],
         "warnings": [],
     }

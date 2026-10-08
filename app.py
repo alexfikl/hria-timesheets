@@ -101,7 +101,10 @@ async def import_pontaj(request: Request) -> HTMLResponse:
     _timesheet, context = build_context({**existing, **imported})
     context["import_errors"] = import_errors
     context["imported"] = bool(imported)
-    return templates.TemplateResponse(request, "index.html", context)
+    status_code = 422 if import_errors else 200
+    return templates.TemplateResponse(
+        request, "index.html", context, status_code=status_code
+    )
 
 
 @app.post("/partial", response_class=HTMLResponse)

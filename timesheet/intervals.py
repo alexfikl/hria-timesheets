@@ -29,7 +29,7 @@ class TimeRange:
         return self.end - self.start
 
 
-def parse(text: object) -> list[TimeRange]:
+def parse(text: str | None) -> list[TimeRange]:
     """Parse ``text`` into ranges, raising :class:`ValueError` if malformed."""
     if text is None:
         return []
