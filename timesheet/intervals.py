@@ -72,13 +72,3 @@ def total_hours(ranges: list[TimeRange]) -> float:
 
 def overlap(a: TimeRange, b: TimeRange) -> bool:
     return a.start < b.end and b.start < a.end
-
-
-def occupied_slots(ranges: list[TimeRange], slot_minutes: int = 30) -> set[int]:
-    """Return the set of slot indices covered by ``ranges``."""
-    slots: set[int] = set()
-    for r in ranges:
-        first = r.start // slot_minutes
-        last = -(-r.end // slot_minutes)  # ceil
-        slots.update(range(first, last))
-    return slots

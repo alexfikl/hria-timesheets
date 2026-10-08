@@ -49,7 +49,9 @@ def _clamp(value: int, low: int, high: int) -> int:
     return max(low, min(high, value))
 
 
-def _build_days(year: int, month: int, count: int, cells: dict) -> list[dict]:
+def _build_days(
+    year: int, month: int, count: int, cells: dict[tuple[int, int], Cell]
+) -> list[dict[str, Any]]:
     holidays = ro_holidays(year)
     rows: list[dict] = []
     days_in_month = Timesheet(year=year, month=month).days_in_month
@@ -85,7 +87,7 @@ def _build_days(year: int, month: int, count: int, cells: dict) -> list[dict]:
 
 def build_context(
     form: Mapping[str, Any], today: date | None = None
-) -> tuple[Timesheet, dict]:
+) -> tuple[Timesheet, dict[str, Any]]:
     today = today or date.today()
     month = _clamp(_int(form.get("month"), today.month), 1, 12)
     year = _clamp(_int(form.get("year"), today.year), 2000, 2100)

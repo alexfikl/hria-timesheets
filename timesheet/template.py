@@ -15,11 +15,13 @@ from io import BytesIO
 from pathlib import Path
 
 import openpyxl
+from openpyxl.cell.cell import Cell
 from openpyxl.styles import PatternFill
 from openpyxl.utils import get_column_letter
 
 from .holidays import is_weekend, ro_holidays
 from .layout import resize
+from .model import Timesheet
 
 TEMPLATE_PATH = (
     Path(__file__).resolve().parent.parent / "templates" / "anexa1_blank.xlsx"
@@ -49,12 +51,12 @@ HOLIDAY_FILL = PatternFill(fill_type="solid", start_color="FCE4D6", end_color="F
 INACTIVE_FILL = PatternFill(fill_type="solid", start_color="D9D9D9", end_color="D9D9D9")
 
 
-def _maybe_number(value: str):
+def _maybe_number(value: str) -> int | str:
     text = str(value).strip()
     return int(text) if text.isdigit() else text
 
 
-def _set_text(cell, value) -> None:
+def _set_text(cell: Cell, value: str | int | None) -> None:
     """Write text as a literal string so Excel never evaluates it as a formula."""
     cell.value = value
     if isinstance(value, str):
@@ -66,7 +68,7 @@ def _value_column(count: int) -> int:
     return 6 if count >= 2 else 4
 
 
-def render(ts, gray: bool = True, write_date: bool = True) -> bytes:
+def render(ts: Timesheet, gray: bool = True, write_date: bool = True) -> bytes:
     """Return the generated workbook as bytes."""
     count = len(ts.projects)
     if count < 1:

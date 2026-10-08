@@ -11,6 +11,7 @@ Run locally with:
 from __future__ import annotations
 
 import re
+from collections.abc import Awaitable, Callable
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -53,7 +54,9 @@ SECURITY_HEADERS = {
 
 
 @app.middleware("http")
-async def add_security_headers(request: Request, call_next):
+async def add_security_headers(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
     response = await call_next(request)
     for name, value in SECURITY_HEADERS.items():
         response.headers.setdefault(name, value)
@@ -61,13 +64,13 @@ async def add_security_headers(request: Request, call_next):
 
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
+async def index(request: Request) -> HTMLResponse:
     _timesheet, context = build_context({})
     return templates.TemplateResponse(request, "index.html", context)
 
 
 @app.post("/import", response_class=HTMLResponse)
-async def import_pontaj(request: Request):
+async def import_pontaj(request: Request) -> HTMLResponse:
     """Pre-fill the form from an uploaded ``pontaj_*.xlsx`` workbook.
 
     The current form is submitted alongside the file (see ``app.js``); values
@@ -101,7 +104,7 @@ async def import_pontaj(request: Request):
 
 
 @app.post("/partial", response_class=HTMLResponse)
-async def partial(request: Request):
+async def partial(request: Request) -> HTMLResponse:
     """Re-render the project inputs + day grid for an HTMX swap."""
     form = await request.form()
     _timesheet, context = build_context(form)
@@ -109,7 +112,7 @@ async def partial(request: Request):
 
 
 @app.post("/generate")
-async def generate(request: Request):
+async def generate(request: Request) -> Response:
     form = await request.form()
     timesheet, context = build_context(form)
 

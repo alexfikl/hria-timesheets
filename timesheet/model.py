@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import calendar
 from dataclasses import dataclass, field
+from typing import Literal
 
 from . import intervals
 
@@ -77,7 +78,7 @@ class Timesheet:
 @dataclass
 class Issue:
     day: int | None
-    level: str  # "error" | "warning"
+    level: Literal["error", "warning"]
     message: str
 
 

@@ -23,6 +23,7 @@ import sys
 from pathlib import Path
 
 import openpyxl
+from openpyxl.cell.cell import Cell
 from openpyxl.styles import PatternFill
 from openpyxl.utils import get_column_letter
 
@@ -34,11 +35,11 @@ FOOTER_FIRST_ROW = 45
 FOOTER_LAST_ROW = 58
 
 
-def _copy_style(src, dst) -> None:
+def _copy_style(src: Cell, dst: Cell) -> None:
     dst._style = copy.copy(src._style)
 
 
-def _move_cell(src, dst) -> None:
+def _move_cell(src: Cell, dst: Cell) -> None:
     _copy_style(src, dst)
     dst.value = src.value
 

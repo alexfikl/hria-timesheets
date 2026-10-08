@@ -17,8 +17,10 @@ from __future__ import annotations
 
 import copy
 
+from openpyxl.cell.cell import Cell
 from openpyxl.styles import Alignment, Border, Font, PatternFill
 from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.worksheet import Worksheet
 
 OLD_PAIRS = 3
 OLD_TOTAL_COL = 3 + 2 * OLD_PAIRS  # I (9)
@@ -28,7 +30,7 @@ DEFAULT_WIDTH = 8.43
 FOOTER_MERGED_ROWS = [46, 47, 48, 49, 50, 51, 52, 53, 56, 58, 59]
 
 
-def _reset(cell) -> None:
+def _reset(cell: Cell) -> None:
     cell.value = None
     cell.font = Font()
     cell.border = Border()
@@ -37,7 +39,7 @@ def _reset(cell) -> None:
     cell.number_format = "General"
 
 
-def resize(ws, count: int) -> int:
+def resize(ws: Worksheet, count: int) -> int:
     """Resize ``ws`` for ``count`` contracts and return the total column index."""
     count = max(1, int(count))
     new_total = 3 + 2 * count
@@ -47,7 +49,7 @@ def resize(ws, count: int) -> int:
     ref_total_w = ws.column_dimensions[get_column_letter(OLD_TOTAL_COL)].width or 20.57
 
     max_row = ws.max_row
-    for merged in list(ws.merged_cells.ranges):
+    for merged in list(ws.merged_cells.ranges):  # ty: ignore[invalid-argument-type]
         ws.unmerge_cells(str(merged))
 
     # Move the total column (the only column with content to the right) to its
