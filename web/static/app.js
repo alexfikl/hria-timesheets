@@ -77,18 +77,27 @@
     return String(Math.round(value * 100) / 100);
   }
 
-  function hoursCell(name) {
+  function hoursCell(input) {
+    if (input && input.parentElement && input.parentElement.previousElementSibling) {
+      return input.parentElement.previousElementSibling;
+    }
+    const name = typeof input === "string" ? input : (input && input.name);
     return document.querySelector('td[data-hours-for="' + name + '"]');
   }
 
-  function refreshTotal() {
+  function refreshTotal(total) {
+    const el = document.getElementById("grand-total");
+    if (!el) return;
+    if (typeof total === "number") {
+      el.textContent = fmt(total);
+      return;
+    }
     let sum = 0;
     document.querySelectorAll("td.hours").forEach(function (td) {
       const value = parseFloat(td.textContent);
       if (!isNaN(value)) sum += value;
     });
-    const el = document.getElementById("grand-total");
-    if (el) el.textContent = String(Math.round(sum * 100) / 100);
+    el.textContent = fmt(sum);
   }
 
   function refreshIssues(errors) {
@@ -108,20 +117,37 @@
     if (button) button.disabled = !enabled;
   }
 
+  let cachedStore = null;
+  let saveTimer = null;
+
   function loadStore() {
+    if (cachedStore !== null) return cachedStore;
     try {
-      return JSON.parse(window.localStorage.getItem(STORE_KEY)) || {};
+      cachedStore = JSON.parse(window.localStorage.getItem(STORE_KEY)) || {};
     } catch (err) {
-      return {};
+      cachedStore = {};
+    }
+    return cachedStore;
+  }
+
+  function flushStore() {
+    if (saveTimer !== null) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+    if (cachedStore !== null) {
+      try {
+        window.localStorage.setItem(STORE_KEY, JSON.stringify(cachedStore));
+      } catch (err) {
+        // storage may be unavailable (e.g. private mode); ignore
+      }
     }
   }
 
   function saveStore(store) {
-    try {
-      window.localStorage.setItem(STORE_KEY, JSON.stringify(store));
-    } catch (err) {
-      // storage may be unavailable (e.g. private mode); ignore
-    }
+    cachedStore = store;
+    if (saveTimer !== null) clearTimeout(saveTimer);
+    saveTimer = setTimeout(flushStore, 250);
   }
 
   function persistField(input) {
@@ -217,6 +243,7 @@
   function validateAll() {
     const errors = [];
     let badFormat = 0;
+    let totalHours = 0;
     const parsedCache = new Map();
 
     // 1. Format each interval and recompute its hours cell.
@@ -224,7 +251,7 @@
       input.classList.remove("invalid");
       const ranges = parseRanges(input.value);
       parsedCache.set(input, ranges);
-      const cell = hoursCell(input.name);
+      const cell = hoursCell(input);
       if (ranges === null) {
         badFormat += 1;
         input.classList.add("invalid");
@@ -233,7 +260,9 @@
           cell.classList.add("invalid");
         }
       } else if (cell) {
-        cell.textContent = fmt(sumHours(ranges));
+        const hours = sumHours(ranges);
+        totalHours += hours;
+        cell.textContent = fmt(hours);
         cell.classList.remove("invalid");
       }
     });
@@ -312,7 +341,7 @@
     });
 
     refreshIssues(errors);
-    refreshTotal();
+    refreshTotal(totalHours);
     setGenerateEnabled(errors.length === 0);
   }
 
@@ -390,6 +419,7 @@
   const importForm = document.querySelector("form.import-form");
   if (importForm) importForm.addEventListener("submit", snapshotMainForm);
 
+  window.addEventListener("beforeunload", flushStore);
   document.addEventListener("htmx:afterSwap", refreshAll);
   document.addEventListener("DOMContentLoaded", refreshAll);
 })();
