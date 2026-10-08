@@ -40,7 +40,14 @@ def parse(text: object) -> list[TimeRange]:
     ranges: list[TimeRange] = []
     for match in _RANGE_RE.finditer(text):
         start_h, start_m, end_h, end_m = (int(g) for g in match.groups())
-        if start_h > 24 or end_h > 24 or start_m > 59 or end_m > 59:
+        if (
+            start_h > 24
+            or end_h > 24
+            or start_m > 59
+            or end_m > 59
+            or (start_h == 24 and start_m > 0)
+            or (end_h == 24 and end_m > 0)
+        ):
             raise ValueError(f"oră invalidă în {match.group(0)!r}")
         start = start_h * 60 + start_m
         end = end_h * 60 + end_m

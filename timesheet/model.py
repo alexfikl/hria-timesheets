@@ -133,7 +133,7 @@ def validate(ts: Timesheet) -> list[Issue]:
             intervals.total_hours(parsed.get((day, index), []))
             for index in range(len(ts.projects))
         )
-        if total > DAILY_HOUR_LIMIT:
+        if total > DAILY_HOUR_LIMIT + 1e-9:
             issues.append(
                 Issue(
                     day,

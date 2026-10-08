@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import calendar
 import math
+import re
 from datetime import date
 from io import BytesIO
 from typing import Any
@@ -29,7 +30,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from . import intervals
 from .holidays import is_weekend, ro_holidays
-from .model import EUR_RON_RATE
+from .model import EUR_RON_RATE, MAX_CONTRACTS
 
 NB_INTERVAL = "8:00-16:00"
 PROJECT_START = 16 * 60  # projects start right after the NB, at 16:00
@@ -67,7 +68,7 @@ def _header_row(ws: Worksheet) -> tuple[int, dict[str, int]]:
     for row in range(1, limit + 1):
         names: dict[str, int] = {}
         for col in range(1, (ws.max_column or 1) + 1):
-            name = _text(ws.cell(row, col).value).lower()
+            name = re.sub(r"[\s_]+", "", _text(ws.cell(row, col).value).lower())
             if name:
                 names.setdefault(name, col)
         if "domeniu" in names and "nume" in names:
@@ -139,6 +140,11 @@ def parse_pontaj(data: bytes) -> dict[str, str]:
     ws = _select_sheet(wb)
     header, names = _header_row(ws)
     records = _read_records(ws, header, names)
+    if len(records) >= MAX_CONTRACTS:
+        raise PontajImportError(
+            f"Fișierul conține {len(records)} proiecte "  # spell: disable
+            f"(maximul permis este {MAX_CONTRACTS - 1})."  # spell: disable
+        )
 
     # Identification comes from the POCIDIF contract row (falling back to the
     # first row if none is present).

@@ -11,6 +11,7 @@ Run locally with:
 from __future__ import annotations
 
 import re
+import unicodedata
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 
@@ -83,12 +84,12 @@ async def import_pontaj(request: Request) -> HTMLResponse:
     import_errors: list[str] = []
     imported: dict[str, str] = {}
 
-    if upload is None or isinstance(upload, str):
+    if upload is None or isinstance(upload, str) or not upload.filename:
         import_errors.append("Selectați un fișier de importat.")  # spell: disable
     elif (upload.size or 0) > MAX_IMPORT_BYTES:
         import_errors.append(IMPORT_TOO_LARGE)
     else:
-        data = await upload.read()
+        data = await upload.read(MAX_IMPORT_BYTES + 1)
         if len(data) > MAX_IMPORT_BYTES:
             import_errors.append(IMPORT_TOO_LARGE)
         else:
@@ -126,9 +127,12 @@ async def generate(request: Request) -> Response:
         )
 
     data = render(timesheet, gray=context["gray"])
-    safe_name = (
-        re.sub(r"[^A-Za-z0-9]+", "_", timesheet.display_name).strip("_") or "Timesheet"
+    ascii_name = (
+        unicodedata.normalize("NFKD", timesheet.display_name)
+        .encode("ascii", "ignore")
+        .decode("ascii")
     )
+    safe_name = re.sub(r"[^A-Za-z0-9]+", "_", ascii_name).strip("_") or "Timesheet"
     filename = f"{safe_name}_Timesheet_{context['month']:02d}_{context['year']}.xlsx"
     return Response(
         content=data,
