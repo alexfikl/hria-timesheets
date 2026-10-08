@@ -78,15 +78,13 @@ class Timesheet:
 @dataclass
 class Issue:
     day: int | None
-    level: Literal["error", "warning"]
     message: str
+    level: Literal["error", "warning"] = "error"
 
 
 def daily_total(ts: Timesheet, day: int) -> float:
     return sum(
-        float(cell.hours or 0.0)
-        for (cell_day, _), cell in ts.cells.items()
-        if cell_day == day
+        ts.cells.get((day, idx), Cell()).hours for idx in range(len(ts.projects))
     )
 
 
@@ -103,52 +101,43 @@ def validate(ts: Timesheet) -> list[Issue]:
             ranges = intervals.parse(text)
         except ValueError as exc:
             issues.append(
-                Issue(
-                    day,
-                    "error",
-                    f"Ziua {day}, proiect {project_index + 1}: {exc}.",
-                )
+                Issue(day, f"Ziua {day}, proiect {project_index + 1}: {exc}.")
             )
             continue
         parsed[(day, project_index)] = ranges
 
-        # Intervals inside a single cell must not overlap either.
+        # Ranges are chronologically sorted by intervals.parse.
         same_cell_overlap = any(
-            intervals.overlap(ranges[i], ranges[j])
-            for i in range(len(ranges))
-            for j in range(i + 1, len(ranges))
+            ranges[i].end > ranges[i + 1].start for i in range(len(ranges) - 1)
         )
         if same_cell_overlap:
             issues.append(
                 Issue(
                     day,
-                    "error",
                     f"Ziua {day}, proiect {project_index + 1}: "
                     "intervalele se suprapun.",
                 )
             )
 
+    day_projects: dict[int, list[tuple[int, list[intervals.TimeRange]]]] = {
+        d: [] for d in range(1, ts.days_in_month + 1)
+    }
+    for (day, project_index), ranges in parsed.items():
+        if 1 <= day <= ts.days_in_month and ranges:
+            day_projects[day].append((project_index, ranges))
+
     for day in range(1, ts.days_in_month + 1):
-        total = sum(
-            intervals.total_hours(parsed.get((day, index), []))
-            for index in range(len(ts.projects))
-        )
+        per_project = day_projects[day]
+        total = sum(intervals.total_hours(r) for _, r in per_project)
         if total > DAILY_HOUR_LIMIT + 1e-9:
             issues.append(
                 Issue(
                     day,
-                    "error",
                     f"Ziua {day}: {total:g} h depășesc limita de "
                     f"{DAILY_HOUR_LIMIT} h/zi.",
                 )
             )
 
-    for day in range(1, ts.days_in_month + 1):
-        per_project = [
-            (project_index, ranges)
-            for (cell_day, project_index), ranges in parsed.items()
-            if cell_day == day and ranges
-        ]
         for i in range(len(per_project)):
             for j in range(i + 1, len(per_project)):
                 index_a, ranges_a = per_project[i]
@@ -157,7 +146,6 @@ def validate(ts: Timesheet) -> list[Issue]:
                     issues.append(
                         Issue(
                             day,
-                            "error",
                             f"Ziua {day}: intervalele proiectelor "
                             f"{index_a + 1} și {index_b + 1} se suprapun.",
                         )
@@ -171,14 +159,11 @@ def validate(ts: Timesheet) -> list[Issue]:
             for day in range(1, ts.days_in_month + 1)
         )
         if project.max_hours is None or project.max_hours <= 0:
-            issues.append(
-                Issue(None, "error", f"Proiect {index + 1}: completați orele maxime.")
-            )
+            issues.append(Issue(None, f"Proiect {index + 1}: completați orele maxime."))
         elif total > project.max_hours + 1e-9:
             issues.append(
                 Issue(
                     None,
-                    "error",
                     f"Proiect {index + 1}: {total:g} h depășesc maximul de "
                     f"{project.max_hours:g} h.",
                 )

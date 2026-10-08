@@ -68,7 +68,7 @@ def _value_column(count: int) -> int:
     return 6 if count >= 2 else 4
 
 
-def render(ts: Timesheet, gray: bool = True, write_date: bool = True) -> bytes:
+def render(ts: Timesheet, gray: bool = True) -> bytes:
     """Return the generated workbook as bytes."""
     count = len(ts.projects)
     if count < 1:
@@ -136,12 +136,11 @@ def render(ts: Timesheet, gray: bool = True, write_date: bool = True) -> bytes:
         ws["B47"],
         f"Numele şi prenumele persoană: {ts.display_name}" if ts.display_name else None,
     )
-    if write_date:
-        last_day = date(ts.year, ts.month, days)
-        _set_text(
-            ws["B49"],
-            f"Data: {last_day.day:02d}.{last_day.month:02d}.{last_day.year}",
-        )
+    last_day = date(ts.year, ts.month, days)
+    _set_text(
+        ws["B49"],
+        f"Data: {last_day.day:02d}.{last_day.month:02d}.{last_day.year}",
+    )
     _set_text(
         ws["B51"],
         f"Luat la cunoștință de către Responsabil Lider/Partener: {ts.leader}"
@@ -149,24 +148,25 @@ def render(ts: Timesheet, gray: bool = True, write_date: bool = True) -> bytes:
         else None,
     )
 
-    if gray:
-        holidays = ro_holidays(ts.year)
-        for day in range(1, 32):
-            row = DAY_FIRST_ROW + day - 1
-            if day > days:
-                fill = INACTIVE_FILL
+    holidays = ro_holidays(ts.year) if gray else {}
+    for day in range(1, 32):
+        row = DAY_FIRST_ROW + day - 1
+        if day > days:
+            fill = INACTIVE_FILL
+        elif gray:
+            current = date(ts.year, ts.month, day)
+            if current in holidays:
+                fill = HOLIDAY_FILL
+            elif is_weekend(current):
+                fill = WEEKEND_FILL
             else:
-                current = date(ts.year, ts.month, day)
-                if current in holidays:
-                    fill = HOLIDAY_FILL
-                elif is_weekend(current):
-                    fill = WEEKEND_FILL
-                else:
-                    fill = None
-            if fill is None:
-                continue
-            for col in range(2, total_col + 1):
-                ws.cell(row, col).fill = fill
+                fill = None
+        else:
+            fill = None
+        if fill is None:
+            continue
+        for col in range(2, total_col + 1):
+            ws.cell(row, col).fill = fill
 
     buffer = BytesIO()
     wb.save(buffer)

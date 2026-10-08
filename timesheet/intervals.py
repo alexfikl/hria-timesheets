@@ -60,6 +60,7 @@ def parse(text: object) -> list[TimeRange]:
         raise ValueError(f"text nerecunoscut: {leftover!r}")
     if not ranges:
         raise ValueError("niciun interval găsit")
+    ranges.sort(key=lambda r: (r.start, r.end))
     return ranges
 
 

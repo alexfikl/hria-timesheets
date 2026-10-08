@@ -8,6 +8,7 @@ Pure functions with no FastAPI dependency, so they can be unit tested directly.
 
 from __future__ import annotations
 
+import calendar
 from collections.abc import Mapping
 from datetime import date
 from typing import Any
@@ -21,7 +22,6 @@ from timesheet.model import (
     Cell,
     Project,
     Timesheet,
-    daily_total,
 )
 from timesheet.template import MONTHS_RO
 
@@ -53,8 +53,8 @@ def _build_days(
     year: int, month: int, count: int, cells: dict[tuple[int, int], Cell]
 ) -> list[dict[str, Any]]:
     holidays = ro_holidays(year)
-    rows: list[dict] = []
-    days_in_month = Timesheet(year=year, month=month).days_in_month
+    rows: list[dict[str, Any]] = []
+    days_in_month = calendar.monthrange(year, month)[1]
     for day in range(1, days_in_month + 1):
         current = date(year, month, day)
         weekend = is_weekend(current)
@@ -167,9 +167,7 @@ def build_context(
         "max_contracts": MAX_CONTRACTS,
         "contracts": contracts,
         "days": _build_days(year, month, count, timesheet.cells),
-        "total": sum(
-            daily_total(timesheet, day) for day in range(1, timesheet.days_in_month + 1)
-        ),
+        "total": sum(cell.hours for cell in timesheet.cells.values()),
         "errors": [],
         "warnings": [],
     }
