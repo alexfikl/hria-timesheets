@@ -306,7 +306,7 @@
   function syncRon() {
     const euro = document.querySelector('input[name="euro_rate"]');
     const ron = document.querySelector('input[name="ron_rate"]');
-    if (!euro || !ron) return;
+    if (!euro || !ron || !Number.isFinite(EURO_TO_RON)) return;
     const value = parseNumber(euro.value);
     ron.value = value === null ? "" : String(Math.round(value * EURO_TO_RON));
     persistField(ron);

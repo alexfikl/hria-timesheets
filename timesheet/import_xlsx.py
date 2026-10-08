@@ -18,6 +18,7 @@ in order when they share a day.
 from __future__ import annotations
 
 import calendar
+import math
 from datetime import date
 from io import BytesIO
 from typing import Any
@@ -32,8 +33,8 @@ from .model import EUR_RON_RATE
 
 NB_INTERVAL = "8:00-16:00"
 PROJECT_START = 16 * 60  # projects start right after the NB, at 16:00
-MINUTES_PER_DAY = 24 * 60
 MAX_DAY = 31
+MAX_ROWS = 1000  # guard against workbooks whose max_row is huge but mostly empty
 
 
 class PontajImportError(ValueError):
@@ -50,9 +51,10 @@ def _number(value: Any) -> float | None:
     if value is None or value == "":
         return None
     try:
-        return float(str(value).replace(",", "."))
+        result = float(str(value).replace(",", "."))
     except ValueError:
         return None
+    return result if math.isfinite(result) else None
 
 
 def _format_number(value: float) -> str:
@@ -94,7 +96,8 @@ def _read_records(
         return ws.cell(row, col).value if col else None
 
     records: list[dict[str, Any]] = []
-    for row in range(header + 1, (ws.max_row or header) + 1):
+    last_row = min(ws.max_row or header, header + MAX_ROWS)
+    for row in range(header + 1, last_row + 1):
         domeniu = _text(cell(row, "domeniu"))
         nume = _text(cell(row, "nume"))
         if not domeniu and not nume:
@@ -188,7 +191,7 @@ def parse_pontaj(data: bytes) -> dict[str, str]:
             if hours is None or hours <= 0:
                 continue
             start = next_start.get(day, PROJECT_START)
-            end = min(start + round(hours * 60), MINUTES_PER_DAY)
+            end = min(start + round(hours * 60), intervals.MINUTES_PER_DAY)
             if end <= start:
                 continue
             values[f"interval_{day}_{index}"] = intervals.format(

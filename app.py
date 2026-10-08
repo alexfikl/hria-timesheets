@@ -26,6 +26,7 @@ from web.forms import build_context
 BASE_DIR = Path(__file__).resolve().parent
 
 MAX_IMPORT_BYTES = 5 * 1024 * 1024
+IMPORT_TOO_LARGE = "Fișierul este prea mare (maxim 5 MB)."
 
 templates = Jinja2Templates(directory=str(BASE_DIR / "web" / "templates"))
 
@@ -82,11 +83,11 @@ async def import_pontaj(request: Request):
     if upload is None or isinstance(upload, str):
         import_errors.append("Selectați un fișier de importat.")  # spell: disable
     elif (upload.size or 0) > MAX_IMPORT_BYTES:
-        import_errors.append("Fișierul este prea mare (maxim 5 MB).")
+        import_errors.append(IMPORT_TOO_LARGE)
     else:
         data = await upload.read()
         if len(data) > MAX_IMPORT_BYTES:
-            import_errors.append("Fișierul este prea mare (maxim 5 MB).")
+            import_errors.append(IMPORT_TOO_LARGE)
         else:
             try:
                 imported = parse_pontaj(data)

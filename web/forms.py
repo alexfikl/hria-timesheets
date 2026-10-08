@@ -13,7 +13,7 @@ from datetime import date
 from typing import Any
 
 from timesheet import intervals
-from timesheet.holidays import ro_holidays, weekday_name, weekday_short
+from timesheet.holidays import is_weekend, ro_holidays, weekday_name, weekday_short
 from timesheet.model import (
     DEFAULT_LEADER,
     EUR_RON_RATE,
@@ -55,7 +55,7 @@ def _build_days(year: int, month: int, count: int, cells: dict) -> list[dict]:
     days_in_month = Timesheet(year=year, month=month).days_in_month
     for day in range(1, days_in_month + 1):
         current = date(year, month, day)
-        weekend = current.weekday() >= 5
+        weekend = is_weekend(current)
         if current in holidays:
             css = "holiday"
         elif weekend:
@@ -132,7 +132,7 @@ def build_context(
 
     for day in range(1, timesheet.days_in_month + 1):
         # Weekends cannot be filled; ignore anything submitted for them.
-        if date(year, month, day).weekday() >= 5:
+        if is_weekend(date(year, month, day)):
             continue
         for index in range(count):
             raw = _text(form.get(f"interval_{day}_{index}"))
